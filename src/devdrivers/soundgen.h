@@ -483,6 +483,10 @@ public:
    */
   int volume() { return m_volume; }
 
+  void setEnabledChannels(int n) { m_enabledChannels = n; }
+  int getEnabledChannels() const { return m_enabledChannels; }
+  void incrementEnabledChannels() { ++m_enabledChannels; }
+  void decrementEnabledChannels() { if (m_enabledChannels > 1) --m_enabledChannels; }
 
 private:
 
@@ -524,6 +528,8 @@ private:
   bool                m_initDone;
   
   esp_timer_handle_t  m_timerHandle;
+
+  int                 m_enabledChannels;
   
   #ifdef FABGL_EMULATED
   SDL_AudioDeviceID   m_device;

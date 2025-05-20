@@ -462,7 +462,8 @@ SoundGenerator::SoundGenerator(int sampleRate, gpio_num_t gpio, SoundGenMethod g
     m_DMAChain(nullptr),
     m_genMethod(genMethod),
     m_initDone(false),
-    m_timerHandle(nullptr)
+    m_timerHandle(nullptr),
+    m_enabledChannels(1)
 {
 }
 
@@ -721,6 +722,29 @@ void SoundGenerator::detachNoSuspend(WaveformGenerator * value)
 }
 
 
+// int IRAM_ATTR SoundGenerator::getSample()
+// {
+//   int sample = 0, tvol = 0;
+//   for (auto g = m_channels; g; ) {
+//     if (g->enabled()) {
+//       sample += g->getSample();
+//       tvol += g->volume();
+//     } else if (g->duration() == 0 && g->autoDetach()) {
+//       auto curr = g;
+//       g = g->next;  // setup next item before detaching this one
+//       detachNoSuspend(curr);
+//       continue; // bypass "g = g->next;"
+//     }
+//     g = g->next;
+//   }
+
+//   int avol = tvol ? imin(127, 127 * 127 / tvol) : 127;
+//   sample = sample * avol / 127;
+//   sample = sample * volume() / 127;
+  
+//   return sample;
+// }
+
 int IRAM_ATTR SoundGenerator::getSample()
 {
   int sample = 0, tvol = 0;
@@ -736,14 +760,10 @@ int IRAM_ATTR SoundGenerator::getSample()
     }
     g = g->next;
   }
-
-  int avol = tvol ? imin(127, 127 * 127 / tvol) : 127;
-  sample = sample * avol / 127;
-  sample = sample * volume() / 127;
-  
+  if (m_enabledChannels > 0)
+    sample = sample / m_enabledChannels;  
   return sample;
 }
-
 
 // used by DAC generator
 void IRAM_ATTR SoundGenerator::ISRHandler(void * arg)
